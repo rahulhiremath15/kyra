@@ -48,44 +48,40 @@ if [ "$FORMAT" = "json" ]; then
   echo "low_count=$LOW_COUNT" >> "$GITHUB_OUTPUT"
   echo "overall_risk=$OVERALL_RISK" >> "$GITHUB_OUTPUT"
 
-  # Check fail-on-risk threshold
+  # --- RISK GATE LOGIC ---
   if [ -n "$FAIL_ON_RISK" ]; then
     FAIL_LEVEL_UPPER=$(echo "$FAIL_ON_RISK" | tr '[:lower:]' '[:upper:]')
 
-    # Define risk level ordering
-    declare -A RISK_ORDER
-    RISK_ORDER[LOW]=0
-    RISK_ORDER[MEDIUM]=1
-    RISK_ORDER[HIGH]=2
-    RISK_ORDER[CRITICAL]=3
-
-    # Check if any findings meet or exceed the threshold
-    THRESHOLD_ORDER=${RISK_ORDER[$FAIL_LEVEL_UPPER]}
-
-    if [ -z "$THRESHOLD_ORDER" ]; then
-      echo "::error::Invalid fail-on-risk level: $FAIL_ON_RISK (must be low, medium, high, or critical)"
-      exit 2
-    fi
+    # Force counts to be integers (default 0)
+    C_COUNT=${CRITICAL_COUNT:-0}
+    H_COUNT=${HIGH_COUNT:-0}
+    M_COUNT=${MEDIUM_COUNT:-0}
+    L_COUNT=${LOW_COUNT:-0}
 
     SHOULD_FAIL=false
 
-    # Check each risk level against threshold
-    if [ "${RISK_ORDER[CRITICAL]}" -ge "$THRESHOLD_ORDER" ] && [ "$CRITICAL_COUNT" -gt 0 ]; then
-      SHOULD_FAIL=true
-    fi
-    if [ "${RISK_ORDER[HIGH]}" -ge "$THRESHOLD_ORDER" ] && [ "$HIGH_COUNT" -gt 0 ]; then
-      SHOULD_FAIL=true
-    fi
-    if [ "${RISK_ORDER[MEDIUM]}" -ge "$THRESHOLD_ORDER" ] && [ "$MEDIUM_COUNT" -gt 0 ]; then
-      SHOULD_FAIL=true
-    fi
-    if [ "${RISK_ORDER[LOW]}" -ge "$THRESHOLD_ORDER" ] && [ "$LOW_COUNT" -gt 0 ]; then
-      SHOULD_FAIL=true
-    fi
+    case "$FAIL_LEVEL_UPPER" in
+      "CRITICAL")
+        if [ "$C_COUNT" -gt 0 ]; then SHOULD_FAIL=true; fi
+        ;;
+      "HIGH")
+        if [ "$C_COUNT" -gt 0 ] || [ "$H_COUNT" -gt 0 ]; then SHOULD_FAIL=true; fi
+        ;;
+      "MEDIUM")
+        if [ "$C_COUNT" -gt 0 ] || [ "$H_COUNT" -gt 0 ] || [ "$M_COUNT" -gt 0 ]; then SHOULD_FAIL=true; fi
+        ;;
+      "LOW")
+        if [ "$C_COUNT" -gt 0 ] || [ "$H_COUNT" -gt 0 ] || [ "$M_COUNT" -gt 0 ] || [ "$L_COUNT" -gt 0 ]; then SHOULD_FAIL=true; fi
+        ;;
+      *)
+        echo "::error::Invalid fail-on-risk level: $FAIL_ON_RISK (must be low, medium, high, or critical)"
+        exit 2
+        ;;
+    esac
 
     if [ "$SHOULD_FAIL" = true ]; then
       echo "::error::Risk gate failed: findings at or above $FAIL_LEVEL_UPPER level detected"
-      echo "::error::Critical: $CRITICAL_COUNT | High: $HIGH_COUNT | Medium: $MEDIUM_COUNT | Low: $LOW_COUNT"
+      echo "::error::Critical: $C_COUNT | High: $H_COUNT | Medium: $M_COUNT | Low: $L_COUNT"
       exit 1
     else
       echo "✅ Risk gate passed: no findings at or above $FAIL_LEVEL_UPPER level"
