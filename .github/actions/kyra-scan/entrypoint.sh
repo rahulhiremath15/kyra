@@ -26,11 +26,11 @@ if [ "$FORMAT" = "json" ]; then
   FINDING_COUNT=$(jq -r '.summary.total_findings // 0' "$OUTPUT_FILE")
   OVERALL_RISK=$(jq -r '.risk.overall_level // "LOW"' "$OUTPUT_FILE")
 
-  # Count findings by risk level (safely handling null arrays)
-  CRITICAL_COUNT=$(jq -r '[.risk.findings[]? | select(.risk_level == "CRITICAL")] | length' "$OUTPUT_FILE")
-  HIGH_COUNT=$(jq -r '[.risk.findings[]? | select(.risk_level == "HIGH")] | length' "$OUTPUT_FILE")
-  MEDIUM_COUNT=$(jq -r '[.risk.findings[]? | select(.risk_level == "MEDIUM")] | length' "$OUTPUT_FILE")
-  LOW_COUNT=$(jq -r '[.risk.findings[]? | select(.risk_level == "LOW")] | length' "$OUTPUT_FILE")
+  # Count findings by risk level (forcing strict integers)
+  CRITICAL_COUNT=$(jq -r '[.risk.findings[]? | select(.risk_level == "CRITICAL")] | length | tonumber' "$OUTPUT_FILE")
+  HIGH_COUNT=$(jq -r '[.risk.findings[]? | select(.risk_level == "HIGH")] | length | tonumber' "$OUTPUT_FILE")
+  MEDIUM_COUNT=$(jq -r '[.risk.findings[]? | select(.risk_level == "MEDIUM")] | length | tonumber' "$OUTPUT_FILE")
+  LOW_COUNT=$(jq -r '[.risk.findings[]? | select(.risk_level == "LOW")] | length | tonumber' "$OUTPUT_FILE")
 
   echo "::group::Scan Results"
   echo "Readiness Score: $RISK_SCORE/100"
@@ -51,40 +51,34 @@ if [ "$FORMAT" = "json" ]; then
   # --- RISK GATE LOGIC ---
   if [ -n "$FAIL_ON_RISK" ]; then
     FAIL_LEVEL_UPPER=$(echo "$FAIL_ON_RISK" | tr '[:lower:]' '[:upper:]')
-
-    # Force counts to be integers (default 0)
-    C_COUNT=${CRITICAL_COUNT:-0}
-    H_COUNT=${HIGH_COUNT:-0}
-    M_COUNT=${MEDIUM_COUNT:-0}
-    L_COUNT=${LOW_COUNT:-0}
-
     SHOULD_FAIL=false
 
     case "$FAIL_LEVEL_UPPER" in
       "CRITICAL")
-        if [ "$C_COUNT" -gt 0 ]; then SHOULD_FAIL=true; fi
+        if [ "$CRITICAL_COUNT" -gt 0 ]; then SHOULD_FAIL=true; fi
         ;;
       "HIGH")
-        if [ "$C_COUNT" -gt 0 ] || [ "$H_COUNT" -gt 0 ]; then SHOULD_FAIL=true; fi
+        if [ "$CRITICAL_COUNT" -gt 0 ] || [ "$HIGH_COUNT" -gt 0 ]; then SHOULD_FAIL=true; fi
         ;;
       "MEDIUM")
-        if [ "$C_COUNT" -gt 0 ] || [ "$H_COUNT" -gt 0 ] || [ "$M_COUNT" -gt 0 ]; then SHOULD_FAIL=true; fi
+        if [ "$CRITICAL_COUNT" -gt 0 ] || [ "$HIGH_COUNT" -gt 0 ] || [ "$MEDIUM_COUNT" -gt 0 ]; then SHOULD_FAIL=true; fi
         ;;
       "LOW")
-        if [ "$C_COUNT" -gt 0 ] || [ "$H_COUNT" -gt 0 ] || [ "$M_COUNT" -gt 0 ] || [ "$L_COUNT" -gt 0 ]; then SHOULD_FAIL=true; fi
+        if [ "$CRITICAL_COUNT" -gt 0 ] || [ "$HIGH_COUNT" -gt 0 ] || [ "$MEDIUM_COUNT" -gt 0 ] || [ "$LOW_COUNT" -gt 0 ]; then SHOULD_FAIL=true; fi
         ;;
       *)
-        echo "::error::Invalid fail-on-risk level: $FAIL_ON_RISK (must be low, medium, high, or critical)"
+        echo "::error::Invalid fail-on-risk level: $FAIL_ON_RISK"
         exit 2
         ;;
     esac
 
-    if [ "$SHOULD_FAIL" = true ]; then
+    if [ "$SHOULD_FAIL" = "true" ]; then
       echo "::error::Risk gate failed: findings at or above $FAIL_LEVEL_UPPER level detected"
-      echo "::error::Critical: $C_COUNT | High: $H_COUNT | Medium: $M_COUNT | Low: $L_COUNT"
+      echo "::error::Critical: $CRITICAL_COUNT | High: $HIGH_COUNT | Medium: $MEDIUM_COUNT | Low: $LOW_COUNT"
       exit 1
     else
       echo "✅ Risk gate passed: no findings at or above $FAIL_LEVEL_UPPER level"
+      echo "Counts -> Critical: $CRITICAL_COUNT | High: $HIGH_COUNT | Medium: $MEDIUM_COUNT | Low: $LOW_COUNT"
     fi
   fi
 else
