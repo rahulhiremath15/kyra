@@ -1,0 +1,82 @@
+# Python cryptographic import patterns for AST detector
+
+modules:
+  - module: "cryptography.hazmat.primitives.asymmetric.rsa"
+    algorithm_family: RSA
+    description: "Python cryptography library RSA"
+
+  - module: "cryptography.hazmat.primitives.asymmetric.ec"
+    algorithm_family: ECC
+    description: "Python cryptography library ECC"
+
+  - module: "cryptography.hazmat.primitives.asymmetric.dh"
+    algorithm_family: DH
+    description: "Python cryptography library DH"
+
+  - module: "cryptography.hazmat.primitives.asymmetric.dsa"
+    algorithm_family: DSA
+    description: "Python cryptography library DSA"
+
+  - module: "cryptography.hazmat.primitives.ciphers.algorithms.AES"
+    algorithm_family: AES
+    description: "Python cryptography library AES"
+
+  - module: "cryptography.hazmat.primitives.ciphers.algorithms.ChaCha20"
+    algorithm_family: ChaCha20
+    description: "Python cryptography library ChaCha20"
+
+  - module: "cryptography.hazmat.primitives.hashes.SHA1"
+    algorithm_family: SHA-1
+    description: "Python cryptography library SHA-1"
+
+  - module: "cryptography.hazmat.primitives.hashes.SHA256"
+    algorithm_family: SHA-2
+    description: "Python cryptography library SHA-256"
+
+  - module: "cryptography.hazmat.primitives.hashes.MD5"
+    algorithm_family: MD5
+    description: "Python cryptography library MD5"
+
+  # PyCryptodome
+  - module: "Crypto.Cipher.AES"
+    algorithm_family: AES
+    description: "PyCryptodome AES"
+
+  - module: "Crypto.Cipher.DES"
+    algorithm_family: DES
+    description: "PyCryptodome DES"
+
+  - module: "Crypto.Cipher.DES3"
+    algorithm_family: 3DES
+    description: "PyCryptodome Triple DES"
+
+  - module: "Crypto.PublicKey.RSA"
+    algorithm_family: RSA
+    description: "PyCryptodome RSA"
+
+  - module: "Crypto.PublicKey.ECC"
+    algorithm_family: ECC
+    description: "PyCryptodome ECC"
+
+  - module: "Crypto.PublicKey.DSA"
+    algorithm_family: DSA
+    description: "PyCryptodome DSA"
+
+  # hashlib
+  - module: "hashlib"
+    functions:
+      - name: "sha1"
+        algorithm_family: SHA-1
+      - name: "sha256"
+        algorithm_family: SHA-2
+      - name: "sha384"
+        algorithm_family: SHA-2
+      - name: "sha512"
+        algorithm_family: SHA-2
+      - name: "md5"
+        algorithm_family: MD5
+
+  # ssl module
+  - module: "ssl"
+    description: "Python SSL/TLS module"
+    algorithm_family: ECC  # Default; refined by analysis

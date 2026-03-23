@@ -1,0 +1,108 @@
+# Common cryptographic algorithm patterns
+# Used by the regex detector for language-agnostic matching
+
+- id: rsa-key-gen
+  pattern: "RSA\\.generate\\s*\\(\\s*(\\d+)"
+  algorithm_family: RSA
+  capture_groups:
+    key_size: 1
+  confidence: 0.85
+  description: "RSA key generation with explicit key size"
+
+- id: rsa-reference
+  pattern: "\\bRSA[_-]?(1024|2048|3072|4096)\\b"
+  algorithm_family: RSA
+  capture_groups:
+    key_size: 1
+  confidence: 0.75
+  description: "RSA key size reference"
+
+- id: aes-reference
+  pattern: "\\bAES[_-]?(128|192|256)\\b"
+  algorithm_family: AES
+  capture_groups:
+    key_size: 1
+  confidence: 0.80
+  description: "AES with explicit key size"
+
+- id: aes-gcm
+  pattern: "AES[_.-]?(128|256)?[_.-]?GCM"
+  algorithm_family: AES
+  capture_groups:
+    key_size: 1
+  confidence: 0.85
+  description: "AES-GCM mode"
+
+- id: sha1-usage
+  pattern: "\\b(sha1|SHA1|SHA-1)\\b"
+  algorithm_family: SHA-1
+  confidence: 0.70
+  description: "SHA-1 hash usage"
+
+- id: sha256-usage
+  pattern: "\\b(sha256|SHA256|SHA-256)\\b"
+  algorithm_family: SHA-2
+  confidence: 0.70
+  description: "SHA-256 hash usage"
+
+- id: md5-usage
+  pattern: "\\b(md5|MD5)\\b"
+  algorithm_family: MD5
+  confidence: 0.65
+  description: "MD5 hash usage"
+
+- id: des-usage
+  pattern: "(?:(?:^|[^A-Za-z])DES(?:[^A-Za-z]|$))|\\bDES[_-]?CBC\\b|\\bDES[_-]?ECB\\b"
+  algorithm_family: DES
+  confidence: 0.60
+  description: "DES cipher usage (standalone word or with cipher mode)"
+
+- id: triple-des
+  pattern: "\\b(3DES|Triple[_-]?DES|DESede)\\b"
+  algorithm_family: 3DES
+  confidence: 0.75
+  description: "Triple DES usage"
+
+- id: ecdsa-usage
+  pattern: "\\b(ECDSA|ecdsa|EC[_-]DSA)\\b"
+  algorithm_family: ECC
+  confidence: 0.80
+  description: "ECDSA signature algorithm"
+
+- id: ecdh-usage
+  pattern: "\\b(ECDH|ecdh|ECDHE|ecdhe)\\b"
+  algorithm_family: ECC
+  confidence: 0.80
+  description: "ECDH key exchange"
+
+- id: chacha20-usage
+  pattern: "\\b(ChaCha20|CHACHA20|chacha20)"
+  algorithm_family: ChaCha20
+  confidence: 0.85
+  description: "ChaCha20 stream cipher"
+
+- id: dh-key-exchange
+  pattern: "\\bDiffie[_-]?Hellman\\b|\\bDH[_-]?(2048|4096)\\b"
+  algorithm_family: DH
+  capture_groups:
+    key_size: 1
+  confidence: 0.75
+  description: "Diffie-Hellman key exchange"
+
+- id: mlkem-usage
+  pattern: "\\b(ML[_-]?KEM|MLKEM|Kyber)\\b"
+  algorithm_family: ML-KEM
+  confidence: 0.90
+  description: "ML-KEM (FIPS 203) post-quantum KEM"
+
+- id: mldsa-usage
+  pattern: "\\b(ML[_-]?DSA|MLDSA|Dilithium)\\b"
+  algorithm_family: ML-DSA
+  confidence: 0.90
+  description: "ML-DSA (FIPS 204) post-quantum signature"
+
+- id: slhdsa-usage
+  pattern: "\\b(SLH[_-]?DSA|SLHDSA|SPHINCS)\\b"
+  algorithm_family: SLH-DSA
+  confidence: 0.90
+  description: "SLH-DSA (FIPS 205) post-quantum signature"
