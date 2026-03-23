@@ -21,16 +21,16 @@ echo "::endgroup::"
 
 # Parse the JSON report to extract metrics
 if [ "$FORMAT" = "json" ]; then
-  # Extract metrics using jq (handling structured JSON report)
-  RISK_SCORE=$(jq -r '.summary.readiness_score // 0' "$OUTPUT_FILE")
-  FINDING_COUNT=$(jq -r '.summary.total_findings // 0' "$OUTPUT_FILE")
-  OVERALL_RISK=$(jq -r '.risk.overall_level // "LOW"' "$OUTPUT_FILE")
+  # Extract metrics directly from Kyra's root JSON structure
+  RISK_SCORE=$(jq -r '.overall_risk // 0' "$OUTPUT_FILE")
+  FINDING_COUNT=$(jq -r '.total_findings // 0' "$OUTPUT_FILE")
+  OVERALL_RISK=$(jq -r '.overall_level // "LOW"' "$OUTPUT_FILE")
 
-  # Count findings by risk level (forcing strict integers)
-  CRITICAL_COUNT=$(jq -r '[.risk.findings[]? | select(.risk_level == "CRITICAL")] | length | tonumber' "$OUTPUT_FILE")
-  HIGH_COUNT=$(jq -r '[.risk.findings[]? | select(.risk_level == "HIGH")] | length | tonumber' "$OUTPUT_FILE")
-  MEDIUM_COUNT=$(jq -r '[.risk.findings[]? | select(.risk_level == "MEDIUM")] | length | tonumber' "$OUTPUT_FILE")
-  LOW_COUNT=$(jq -r '[.risk.findings[]? | select(.risk_level == "LOW")] | length | tonumber' "$OUTPUT_FILE")
+  # Extract counts directly from counts_by_level (fallback to 0 if missing)
+  CRITICAL_COUNT=$(jq -r '.counts_by_level.CRITICAL // 0' "$OUTPUT_FILE")
+  HIGH_COUNT=$(jq -r '.counts_by_level.HIGH // 0' "$OUTPUT_FILE")
+  MEDIUM_COUNT=$(jq -r '.counts_by_level.MEDIUM // 0' "$OUTPUT_FILE")
+  LOW_COUNT=$(jq -r '.counts_by_level.LOW // 0' "$OUTPUT_FILE")
 
   echo "::group::Scan Results"
   echo "Readiness Score: $RISK_SCORE/100"
