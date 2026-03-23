@@ -26,11 +26,11 @@ if [ "$FORMAT" = "json" ]; then
   FINDING_COUNT=$(jq -r '.summary.total_findings // 0' "$OUTPUT_FILE")
   OVERALL_RISK=$(jq -r '.risk.overall_level // "LOW"' "$OUTPUT_FILE")
 
-  # Count findings by risk level
-  CRITICAL_COUNT=$(jq -r '[.risk.findings[] | select(.risk_level == "CRITICAL")] | length' "$OUTPUT_FILE")
-  HIGH_COUNT=$(jq -r '[.risk.findings[] | select(.risk_level == "HIGH")] | length' "$OUTPUT_FILE")
-  MEDIUM_COUNT=$(jq -r '[.risk.findings[] | select(.risk_level == "MEDIUM")] | length' "$OUTPUT_FILE")
-  LOW_COUNT=$(jq -r '[.risk.findings[] | select(.risk_level == "LOW")] | length' "$OUTPUT_FILE")
+  # Count findings by risk level (safely handling null arrays)
+  CRITICAL_COUNT=$(jq -r '[.risk.findings[]? | select(.risk_level == "CRITICAL")] | length' "$OUTPUT_FILE")
+  HIGH_COUNT=$(jq -r '[.risk.findings[]? | select(.risk_level == "HIGH")] | length' "$OUTPUT_FILE")
+  MEDIUM_COUNT=$(jq -r '[.risk.findings[]? | select(.risk_level == "MEDIUM")] | length' "$OUTPUT_FILE")
+  LOW_COUNT=$(jq -r '[.risk.findings[]? | select(.risk_level == "LOW")] | length' "$OUTPUT_FILE")
 
   echo "::group::Scan Results"
   echo "Readiness Score: $RISK_SCORE/100"
