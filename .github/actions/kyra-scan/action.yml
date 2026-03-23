@@ -1,0 +1,98 @@
+name: 'KYRA Security Scan'
+description: 'Post-quantum cryptography readiness scanning for your repositories'
+author: 'KYRA Team'
+
+branding:
+  icon: 'shield'
+  color: 'blue'
+
+inputs:
+  path:
+    description: 'Directory to scan for cryptographic usage'
+    required: false
+    default: '.'
+  fail-on-risk:
+    description: 'Fail the build if any finding meets this risk level (low, medium, high, critical)'
+    required: false
+    default: ''
+  format:
+    description: 'Output format for the report (json, csv, cyclonedx)'
+    required: false
+    default: 'json'
+  output-file:
+    description: 'Path to save the structured report output'
+    required: false
+    default: 'kyra-report.json'
+  python-version:
+    description: 'Python version to use for running KYRA'
+    required: false
+    default: '3.11'
+  kyra-ref:
+    description: 'KYRA git ref to install (branch, tag, or commit SHA)'
+    required: false
+    default: 'main'
+  install-from-pypi:
+    description: 'Install from PyPI instead of GitHub (requires kyra to be published)'
+    required: false
+    default: 'false'
+
+outputs:
+  risk_score:
+    description: 'Post-quantum readiness score (0-100)'
+    value: ${{ steps.scan.outputs.risk_score }}
+  finding_count:
+    description: 'Total number of cryptographic findings detected'
+    value: ${{ steps.scan.outputs.finding_count }}
+  critical_count:
+    description: 'Number of critical risk findings'
+    value: ${{ steps.scan.outputs.critical_count }}
+  high_count:
+    description: 'Number of high risk findings'
+    value: ${{ steps.scan.outputs.high_count }}
+  medium_count:
+    description: 'Number of medium risk findings'
+    value: ${{ steps.scan.outputs.medium_count }}
+  low_count:
+    description: 'Number of low risk findings'
+    value: ${{ steps.scan.outputs.low_count }}
+  overall_risk:
+    description: 'Overall risk level (LOW, MEDIUM, HIGH, CRITICAL)'
+    value: ${{ steps.scan.outputs.overall_risk }}
+
+runs:
+  using: 'composite'
+  steps:
+    - name: Set up Python
+      uses: actions/setup-python@v5
+      with:
+        python-version: ${{ inputs.python-version }}
+
+    - name: Install KYRA
+      shell: bash
+      run: |
+        python -m pip install --upgrade pip
+        if [ "${{ inputs.install-from-pypi }}" = "true" ]; then
+          echo "Installing KYRA from PyPI..."
+          pip install kyra
+        else
+          echo "Installing KYRA from GitHub repository..."
+          pip install git+https://github.com/rahulhiremath15/kyra.git@${{ inputs.kyra-ref }}
+        fi
+
+    - name: Run KYRA scan
+      id: scan
+      shell: bash
+      run: ${{ github.action_path }}/entrypoint.sh
+      env:
+        INPUT_PATH: ${{ inputs.path }}
+        INPUT_FAIL_ON_RISK: ${{ inputs.fail-on-risk }}
+        INPUT_FORMAT: ${{ inputs.format }}
+        INPUT_OUTPUT_FILE: ${{ inputs.output-file }}
+
+    - name: Upload KYRA report
+      uses: actions/upload-artifact@v4
+      if: always()
+      with:
+        name: kyra-report
+        path: ${{ inputs.output-file }}
+        retention-days: 30
